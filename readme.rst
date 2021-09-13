@@ -5,6 +5,8 @@ Conditional Tokens - Automated Market Makers (AMM)
    :target: https://travis-ci.org/gnosis/conditional-tokens-market-makers
    :alt: Build Status
 
+Fork of https://github.com/gnosis/conditional-tokens-market-makers but uses a local version of ConstructedCloneFactory that is usually from @gnosis.pm/util-contracts. This contract is only in a specific version of that package and can cause problems when other versions are used in the same repo.
+
 Automated Market Makers for the Prediction Markets 2.0 (Conditional Tokens) platform.
 
 `→ Online Documentation`_
