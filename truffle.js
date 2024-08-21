@@ -1,8 +1,17 @@
-require("chai/register-should");
-require('mocha-steps')
+// require("chai/register-should");
+// require('mocha-steps')
+require('dotenv').config()
+
+const HDWalletProvider = require("@truffle/hdwallet-provider");
 
 const config = {
     networks: {
+        basesepolia: {
+            provider: function() {
+                return new HDWalletProvider(process.env.MNEMONIC, "https://base-sepolia.g.alchemy.com/v2/AhhPwsNRqUaAogbJIxJP9c3OqLDBMpwt")
+            },
+            network_id: "84532"
+        },
         mainnet: {
             host: "localhost",
             port: 8545,
