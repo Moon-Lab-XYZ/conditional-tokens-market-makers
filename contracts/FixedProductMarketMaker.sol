@@ -357,42 +357,6 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             );
     }
 
-    function calcSellReturnAmount(
-        uint outcomeTokenSellAmount,
-        uint outcomeIndex
-    ) public view returns (uint returnAmount) {
-        require(outcomeIndex < positionIds.length, "invalid outcome index");
-        require(outcomeTokenSellAmount > 0, "must sell non-zero amount");
-
-        uint[] memory poolBalances = getPoolBalances();
-        uint sellTokenPoolBalance = poolBalances[outcomeIndex];
-
-        // Ensure there's enough balance to sell
-        require(
-            outcomeTokenSellAmount <= sellTokenPoolBalance,
-            "not enough tokens in the pool"
-        );
-
-        uint endingOutcomeBalance = sellTokenPoolBalance.sub(
-            outcomeTokenSellAmount
-        );
-        uint numerator = ONE;
-        uint denominator = ONE;
-
-        for (uint i = 0; i < poolBalances.length; i++) {
-            if (i != outcomeIndex) {
-                numerator = numerator.mul(poolBalances[i]);
-            } else {
-                numerator = numerator.mul(sellTokenPoolBalance);
-                denominator = denominator.mul(endingOutcomeBalance);
-            }
-        }
-
-        uint returnAmountPlusFees = numerator.sub(denominator).div(ONE);
-        uint feeAmount = returnAmountPlusFees.mul(fee) / ONE.add(fee);
-        returnAmount = returnAmountPlusFees.sub(feeAmount);
-    }
-
     function buy(
         uint investmentAmount,
         uint outcomeIndex,
