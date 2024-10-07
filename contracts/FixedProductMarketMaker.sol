@@ -59,6 +59,11 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     mapping(address => uint256) withdrawnFees;
     uint internal totalWithdrawnFees;
 
+    uint public creatorFee;
+    address public marketCreator;
+    uint internal creatorFeePoolWeight;
+    mapping(address => uint256) creatorWithdrawnFees; // Track creator's withdrawn fees
+
     function getPoolBalances() private view returns (uint[] memory) {
         address[] memory thises = new address[](positionIds.length);
         for (uint i = 0; i < positionIds.length; i++) {
@@ -130,6 +135,25 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
                 "withdrawal transfer failed"
             );
         }
+    }
+
+    function withdrawCreatorFees() public {
+        require(
+            msg.sender == marketCreator,
+            "Only market creator can withdraw"
+        );
+
+        uint withdrawableAmount = creatorFeePoolWeight.sub(
+            creatorWithdrawnFees[marketCreator]
+        );
+        require(withdrawableAmount > 0, "No fees to withdraw");
+
+        creatorWithdrawnFees[marketCreator] = creatorFeePoolWeight;
+
+        require(
+            collateralToken.transfer(marketCreator, withdrawableAmount),
+            "Creator fee withdrawal failed"
+        );
     }
 
     function _beforeTokenTransfer(
@@ -310,8 +334,12 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         require(outcomeIndex < positionIds.length, "invalid outcome index");
 
         uint[] memory poolBalances = getPoolBalances();
-        uint investmentAmountMinusFees = investmentAmount.sub(
-            investmentAmount.mul(fee) / ONE
+
+        uint creatorFee = investmentAmount.mul(creatorFee) / ONE;
+        uint investmentAmountAfterCreatorFee = investmentAmount.sub(creatorFee);
+
+        uint investmentAmountMinusFees = investmentAmountAfterCreatorFee.sub(
+            investmentAmountAfterCreatorFee.mul(fee) / ONE
         );
         uint buyTokenPoolBalance = poolBalances[outcomeIndex];
         uint endingOutcomeBalance = buyTokenPoolBalance.mul(ONE);
@@ -338,7 +366,13 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         require(outcomeIndex < positionIds.length, "invalid outcome index");
 
         uint[] memory poolBalances = getPoolBalances();
-        uint returnAmountPlusFees = returnAmount.mul(ONE) / ONE.sub(fee);
+
+        uint creatorFeeAmount = returnAmount.mul(creatorFee) / ONE;
+        uint returnAmountAfterCreatorFee = returnAmount.sub(creatorFeeAmount);
+
+        uint returnAmountPlusFees = returnAmountAfterCreatorFee.mul(ONE) /
+            (ONE.sub(fee));
+
         uint sellTokenPoolBalance = poolBalances[outcomeIndex];
         uint endingOutcomeBalance = sellTokenPoolBalance.mul(ONE);
         for (uint i = 0; i < poolBalances.length; i++) {
@@ -379,7 +413,13 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
         uint feeAmount = investmentAmount.mul(fee) / ONE;
         feePoolWeight = feePoolWeight.add(feeAmount);
-        uint investmentAmountMinusFees = investmentAmount.sub(feeAmount);
+
+        uint creatorFeeAmount = investmentAmount.mul(creatorFee) / ONE;
+        creatorFeePoolWeight = creatorFeePoolWeight.add(creatorFeeAmount);
+
+        uint investmentAmountMinusFees = investmentAmount.sub(feeAmount).sub(
+            creatorFeeAmount
+        );
         require(
             collateralToken.approve(
                 address(conditionalTokens),
@@ -424,14 +464,20 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             outcomeTokensToSell,
             ""
         );
+        uint creatorFeeAmount = returnAmount.mul(creatorFee) / ONE;
+        uint returnAmountAfterCreatorFee = returnAmount.sub(creatorFeeAmount);
 
-        uint feeAmount = returnAmount.mul(fee) / (ONE.sub(fee));
+        uint feeAmount = returnAmountAfterCreatorFee.mul(fee) / (ONE.sub(fee));
         feePoolWeight = feePoolWeight.add(feeAmount);
-        uint returnAmountPlusFees = returnAmount.add(feeAmount);
+
+        creatorFeePoolWeight = creatorFeePoolWeight.add(creatorFeeAmount);
+
+        uint returnAmountPlusFees = returnAmountAfterCreatorFee.add(feeAmount);
         mergePositionsThroughAllConditions(returnAmountPlusFees);
 
+        uint netReturnAmount = returnAmountAfterCreatorFee;
         require(
-            collateralToken.transfer(msg.sender, returnAmount),
+            collateralToken.transfer(msg.sender, netReturnAmount),
             "return transfer failed"
         );
 
