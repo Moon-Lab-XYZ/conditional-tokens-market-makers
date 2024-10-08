@@ -50,6 +50,7 @@ contract FixedProductMarketMakerFactory is
         collateralToken = _collateralToken;
         conditionIds = _conditionIds;
         fee = _fee;
+        creatorFee = _creatorFee;
 
         uint atomicOutcomeSlotCount = 1;
         outcomeSlotCounts = new uint[](conditionIds.length);
@@ -103,7 +104,7 @@ contract FixedProductMarketMakerFactory is
         IERC20 collateralToken,
         bytes32[] calldata conditionIds,
         uint fee,
-        uint creatorFee,
+        uint creatorFee
     ) external returns (FixedProductMarketMaker) {
         FixedProductMarketMaker fixedProductMarketMaker = FixedProductMarketMaker(
                 createClone(

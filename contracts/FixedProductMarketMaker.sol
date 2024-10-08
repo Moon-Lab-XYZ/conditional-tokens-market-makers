@@ -62,7 +62,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     uint public creatorFee;
     address public marketCreator;
     uint internal creatorFeePoolWeight;
-    mapping(address => uint256) creatorWithdrawnFees; // Track creator's withdrawn fees
+    mapping(address => uint256) creatorWithdrawnFees;
 
     function getPoolBalances() private view returns (uint[] memory) {
         address[] memory thises = new address[](positionIds.length);
@@ -335,8 +335,10 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
         uint[] memory poolBalances = getPoolBalances();
 
-        uint creatorFee = investmentAmount.mul(creatorFee) / ONE;
-        uint investmentAmountAfterCreatorFee = investmentAmount.sub(creatorFee);
+        uint creatorFeeAmount = investmentAmount.mul(creatorFee) / ONE;
+        uint investmentAmountAfterCreatorFee = investmentAmount.sub(
+            creatorFeeAmount
+        );
 
         uint investmentAmountMinusFees = investmentAmountAfterCreatorFee.sub(
             investmentAmountAfterCreatorFee.mul(fee) / ONE
@@ -536,4 +538,9 @@ contract FixedProductMarketMakerData {
     uint[] internal positionIds;
     mapping(address => uint256) internal withdrawnFees;
     uint internal totalWithdrawnFees;
+
+    uint public creatorFee;
+    address public marketCreator;
+    uint internal creatorFeePoolWeight;
+    mapping(address => uint256) creatorWithdrawnFees;
 }
