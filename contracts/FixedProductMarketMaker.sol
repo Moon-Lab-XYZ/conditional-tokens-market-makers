@@ -31,6 +31,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         address indexed buyer,
         uint investmentAmount,
         uint feeAmount,
+        uint creatorFeeAmount,
         uint indexed outcomeIndex,
         uint outcomeTokensBought
     );
@@ -38,6 +39,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         address indexed seller,
         uint returnAmount,
         uint feeAmount,
+        uint creatorFeeAmount,
         uint indexed outcomeIndex,
         uint outcomeTokensSold
     );
