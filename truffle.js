@@ -12,6 +12,12 @@ const config = {
             },
             network_id: "84532"
         },
+        base: {
+            provider: function() {
+                return new HDWalletProvider(process.env.MNEMONIC, "https://base-mainnet.g.alchemy.com/v2/AhhPwsNRqUaAogbJIxJP9c3OqLDBMpwt")
+            },
+            network_id: "8453"
+        },
         mainnet: {
             host: "localhost",
             port: 8545,

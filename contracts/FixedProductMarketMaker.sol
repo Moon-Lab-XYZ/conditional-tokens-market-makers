@@ -63,6 +63,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
     address public marketCreator;
     uint internal creatorFeePoolWeight;
     mapping(address => uint256) creatorWithdrawnFees;
+    uint internal totalCreatorWithdrawnFees;
 
     function getPoolBalances() private view returns (uint[] memory) {
         address[] memory thises = new address[](positionIds.length);
@@ -119,6 +120,10 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         return feePoolWeight.sub(totalWithdrawnFees);
     }
 
+    function collectedCreatorFees() external view returns (uint) {
+        return creatorFeePoolWeight.sub(totalCreatorWithdrawnFees);
+    }
+
     function feesWithdrawableBy(address account) public view returns (uint) {
         uint rawAmount = feePoolWeight.mul(balanceOf(account)) / totalSupply();
         return rawAmount.sub(withdrawnFees[account]);
@@ -144,11 +149,13 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
         );
 
         uint withdrawableAmount = creatorFeePoolWeight.sub(
-            creatorWithdrawnFees[marketCreator]
+            totalCreatorWithdrawnFees
         );
         require(withdrawableAmount > 0, "No fees to withdraw");
 
-        creatorWithdrawnFees[marketCreator] = creatorFeePoolWeight;
+        totalCreatorWithdrawnFees = totalCreatorWithdrawnFees.add(
+            withdrawableAmount
+        );
 
         require(
             collateralToken.transfer(marketCreator, withdrawableAmount),
@@ -443,6 +450,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             msg.sender,
             investmentAmount,
             feeAmount,
+            creatorFeeAmount,
             outcomeIndex,
             outcomeTokensToBuy
         );
@@ -487,6 +495,7 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             msg.sender,
             returnAmount,
             feeAmount,
+            creatorFeeAmount,
             outcomeIndex,
             outcomeTokensToSell
         );
@@ -517,6 +526,7 @@ contract FixedProductMarketMakerData {
         address indexed buyer,
         uint investmentAmount,
         uint feeAmount,
+        uint creatorFeeAmount,
         uint indexed outcomeIndex,
         uint outcomeTokensBought
     );
@@ -524,6 +534,7 @@ contract FixedProductMarketMakerData {
         address indexed seller,
         uint returnAmount,
         uint feeAmount,
+        uint creatorFeeAmount,
         uint indexed outcomeIndex,
         uint outcomeTokensSold
     );
@@ -542,5 +553,5 @@ contract FixedProductMarketMakerData {
     uint public creatorFee;
     address public marketCreator;
     uint internal creatorFeePoolWeight;
-    mapping(address => uint256) creatorWithdrawnFees;
+    uint internal totalCreatorWithdrawnFees;
 }
