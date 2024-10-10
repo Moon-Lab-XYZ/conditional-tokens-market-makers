@@ -378,11 +378,18 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
 
         uint[] memory poolBalances = getPoolBalances();
 
-        uint creatorFeeAmount = returnAmount.mul(creatorFee) / ONE;
-        uint returnAmountAfterCreatorFee = returnAmount.sub(creatorFeeAmount);
+        // Calculate the gross amount based on the returnAmount (net amount)
+        uint grossAmount = returnAmount.mul(ONE) /
+            (ONE.sub(creatorFee).sub(fee));
 
-        uint returnAmountPlusFees = returnAmountAfterCreatorFee.mul(ONE) /
-            (ONE.sub(fee));
+        // Calculate the creator fee from the gross amount
+        uint creatorFeeAmount = grossAmount.mul(creatorFee) / ONE;
+
+        // Calculate the fee from the gross amount
+        uint feeAmount = grossAmount.mul(fee) / ONE;
+
+        // Calculate the total amount after applying both fees
+        uint returnAmountPlusFees = grossAmount;
 
         uint sellTokenPoolBalance = poolBalances[outcomeIndex];
         uint endingOutcomeBalance = sellTokenPoolBalance.mul(ONE);
@@ -476,15 +483,15 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             outcomeTokensToSell,
             ""
         );
-        uint creatorFeeAmount = returnAmount.mul(creatorFee) / ONE;
+        uint grossAmount = returnAmount.mul(ONE) /
+            (ONE.sub(creatorFee).sub(fee));
+        uint creatorFeeAmount = grossAmount.mul(creatorFee) / ONE;
         creatorFeePoolWeight = creatorFeePoolWeight.add(creatorFeeAmount);
 
-        uint feeAmount = returnAmount.mul(fee) / (ONE.sub(fee));
+        uint feeAmount = grossAmount.mul(fee) / ONE;
         feePoolWeight = feePoolWeight.add(feeAmount);
 
-        uint returnAmountPlusFees = returnAmount.add(feeAmount).add(
-            creatorFeeAmount
-        );
+        uint returnAmountPlusFees = grossAmount;
         mergePositionsThroughAllConditions(returnAmountPlusFees);
 
         require(
