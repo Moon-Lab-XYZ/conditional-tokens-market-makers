@@ -477,19 +477,18 @@ contract FixedProductMarketMaker is ERC20, ERC1155TokenReceiver {
             ""
         );
         uint creatorFeeAmount = returnAmount.mul(creatorFee) / ONE;
-        uint returnAmountAfterCreatorFee = returnAmount.sub(creatorFeeAmount);
-
-        uint feeAmount = returnAmountAfterCreatorFee.mul(fee) / (ONE.sub(fee));
-        feePoolWeight = feePoolWeight.add(feeAmount);
-
         creatorFeePoolWeight = creatorFeePoolWeight.add(creatorFeeAmount);
 
-        uint returnAmountPlusFees = returnAmountAfterCreatorFee.add(feeAmount);
+        uint feeAmount = returnAmount.mul(fee) / (ONE.sub(fee));
+        feePoolWeight = feePoolWeight.add(feeAmount);
+
+        uint returnAmountPlusFees = returnAmount.add(feeAmount).add(
+            creatorFeeAmount
+        );
         mergePositionsThroughAllConditions(returnAmountPlusFees);
 
-        uint netReturnAmount = returnAmountAfterCreatorFee;
         require(
-            collateralToken.transfer(msg.sender, netReturnAmount),
+            collateralToken.transfer(msg.sender, returnAmount),
             "return transfer failed"
         );
 
